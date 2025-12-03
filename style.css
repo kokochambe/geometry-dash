@@ -106,7 +106,7 @@ display: block;
     display: none !important;
 }
 
-button {
+.button {
     background: linear-gradient(45deg, #FF6B6B, #FFD166, #4ECDC4);
     border: none;
     padding: 18px 35px;
@@ -121,7 +121,7 @@ button {
     border: 2px solid rgba(255,255,255,0.3);
 }
 
-button::before {
+.button::before {
     content: '';
     position: absolute;
     top: 0;
@@ -132,7 +132,7 @@ button::before {
     transition: 0.5s;
 }
 
-button:hover::before {
+.button:hover::before {
     left: 100%;
 }
 
@@ -141,10 +141,42 @@ button:hover {
     box-shadow: 0 15px 35px rgba(255, 107, 107, 0.8);
 }
 
-button:active {
+.button:active {
     transform: translateY(0) scale(0.95);
 }
- 
+
+h1 {
+font-size: 3.5em;
+margin-bottom: 20px;
+background: linear-gradient(45deg, #FFEB3B,
+#FF4081,
+#3D5AFE);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+text-shadow: 0 5px 15px Orgba(0,0,0,0.2);
+}
+
+
+@keyframes glow {
+from { text-shadow: 0 5px 15px Orgba(0,0,0,0.3); }
+to { text-shadow: 0 5px 25px rgba(255,107,107,0.5); }
+
+}
+
+h2 {
+font-size: 2.5em;
+margin-bottom: 25px;
+color: #FF6B6B;
+text-shadow: 0 3px 10px Orgba(0,0,0,0.3);
+}
+#finalScore {
+font-size: 2em;
+color: #FFD700;
+margin: 20px 0;
+text-shadow: 0 3px 10px Orgba(0,0,0,0.3);
+
+}
 #controls {
     margin-top: 25px;
     font-size: 16px;
@@ -200,7 +232,7 @@ button:active {
 100% { transform: scale(1); }
 }
 
-pulse {
+.pulse {
 animation: pulse 2s infinite;
 }
 
