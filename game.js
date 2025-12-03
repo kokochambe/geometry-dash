@@ -6,7 +6,6 @@ class GeometryDash {
         this.ctx = this.canvas.getContext('2d');
         this.scoreElement = document.getElementById('score');
         this.highScoreElement = document.getElementById('highScore');
-        window.game = this;
         
         if (!this.canvas) {
             console.error('❌ Canvas not found!');
@@ -18,17 +17,18 @@ class GeometryDash {
         this.setupCanvas();
         this.initGame();
         
-        this.highScore = localStorage.getItem('geometryDashHighScore') || 0;
+        this.highScore = parseInt(localStorage.getItem('geometryDashHighScore')) || 0;
         if (this.highScoreElement) {
             this.highScoreElement.textContent = `🏆 Рекорд: ${this.highScore}`;
         }
         
-        setTimeout(() => {
-            this.setupEventListeners();
-            this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        }, 100);
+        this.setupEventListeners();
+        this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
-        console.log('✅ Game initialized for mobile');
+        console.log('✅ Game initialized');
+        
+        // Сохраняем ссылку на игру глобально
+        window.game = this;
     }
 
     jump() {
@@ -46,7 +46,6 @@ class GeometryDash {
             this.player.rotation = -25;
             this.player.scale = 0.8;
             
-            // Эффекты прыжка
             this.createParticleEffect(this.player.x + this.player.width/2, 
                                      this.player.y + this.player.height, 
                                      8, '#FFFFFF');
@@ -65,17 +64,19 @@ class GeometryDash {
             if (e.scale !== 1) {
                 e.preventDefault();
             }
-    }, { passive: false });
-    
-    document.addEventListener('selectstart', (e) => {
-        e.preventDefault();
-    });
-    
-    const viewport = document.queryselector('meta[name=viewport]');
-    if (viewport) {
-        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+        }, { passive: false });
+        
+        document.addEventListener('selectstart', (e) => {
+            e.preventDefault();
+        });
+        
+        // ИСПРАВЛЕНО: queryselector -> querySelector
+        const viewport = document.querySelector('meta[name=viewport]');
+        if (viewport) {
+            viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+        }
     }
-}
+    
     setupAudio() {
         this.audioContext = null;
         this.sounds = {
@@ -88,14 +89,14 @@ class GeometryDash {
         this.initAudioOnFirstTouch();
     }
     
-    initAudioonFirstTouch() {
+    initAudioOnFirstTouch() {
         const initAudio = () => {
             if (!this.audioContext) {
                 try {
                     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    console.log(' 40 Audio context initialized');
+                    console.log('✅ Audio context initialized');
                 } catch (e) {
-                    console.log('X Audio not supported:', e);
+                    console.log('❌ Audio not supported:', e);
                 }
             }
             
@@ -103,37 +104,37 @@ class GeometryDash {
             document.removeEventListener('click', initAudio);
         };
         
-    document.addEventListener('touchstart', initAudio, { once: true });
-    document.addEventListener('click', initAudio, { once: true });
+        document.addEventListener('touchstart', initAudio, { once: true });
+        document.addEventListener('click', initAudio, { once: true });
     }
         
     playSound(soundName) {
         if (!this.audioContext) return;
             
-            const sound = this.sounds[soundName];
-            if (!sound) return;
+        const sound = this.sounds[soundName];
+        if (!sound) return;
             
-            try {
-                const oscillator = this.audioContext.createOscillator();
-                const gainNode = this.audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(this.audioContext.destination);
+        try {
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
 
-                oscillator.frequency.value = sound.freq;
-                oscillator.type = sound.type;
+            oscillator.frequency.value = sound.freq;
+            oscillator.type = sound.type;
 
-                gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + sound.duration);
-                
-                oscillator.start(this.audioContext.currentTime);
-                oscillator.stop(this.audioContext.currentTime + sound.duration);
-            } catch (e) {
-                console.log('Audio error:', e);
-            }
+            gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + sound.duration);
+            
+            oscillator.start(this.audioContext.currentTime);
+            oscillator.stop(this.audioContext.currentTime + sound.duration);
+        } catch (e) {
+            console.log('Audio error:', e);
         }
+    }
 
-        setupCanvas() {
+    setupCanvas() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
         
@@ -179,7 +180,6 @@ class GeometryDash {
             height: 120
         };
         
-        // Цветовые темы
         this.colorThemes = [
             { primary: '#FF6B6B', secondary: '#4ECDC4', bg: '#64B5F6' },
             { primary: '#FF9E6B', secondary: '#6BFFD3', bg: '#a18cd1' },
@@ -191,23 +191,29 @@ class GeometryDash {
     setupEventListeners() {
         console.log('🔧 Setting up event listeners...');
         
-        // Строка 128 в game.js:
-const startBtn = document.getElementById('startBtn');
+        const startBtn = document.getElementById('startBtn');
         if (startBtn) {
             startBtn.addEventListener('click', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
+                console.log('🎮 Start button clicked');
                 this.startGame();
             });
             
             startBtn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
+                console.log('🎮 Start button touched');
                 this.startGame();
             }, { passive: false });
         }
         
         const restartBtn = document.getElementById('restartBtn');
         if (restartBtn) {
-            restartBtn.addEventListener('click', () => this.restartGame());
+            restartBtn.addEventListener('click', () => {
+                console.log('🔄 Restart button clicked');
+                this.restartGame();
+            });
         }
         
         const shareBtn = document.getElementById('shareBtn');
@@ -218,7 +224,7 @@ const startBtn = document.getElementById('startBtn');
         this.setupCanvasControls();
         
         document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' || e.key === '' || e.code === 'ArrowUp') {
+            if (e.code === 'Space' || e.key === ' ' || e.code === 'ArrowUp') {
                 e.preventDefault();
                 this.jump();
             }
@@ -233,36 +239,29 @@ const startBtn = document.getElementById('startBtn');
     }
     
     setupCanvasControls() {
-    const handleJump = (e) => {
-        if (e.type === 'touchstart') {
-            e.preventDefault();
-        }
-        
-        if (this.gameState === 'playing') {
-            this.jump();
-            
-            if (this.isMobile) {
-                this.createTapEffect(e);
+        const handleJump = (e) => {
+            if (e.type === 'touchstart') {
+                e.preventDefault();
+                e.stopPropagation();
             }
-        }
-    };
-    
-    // ТОЛЬКО для прыжка
-    this.canvas.addEventListener('click', handleJump);
-    this.canvas.addEventListener('touchstart', handleJump, { passive: false });
-    
-    document.addEventListener('keydown', (e) => {
-        if (e.code === 'Space' || e.key === ' ') {
-            e.preventDefault();
-            handleJump(e);
-        }
-    });
-    
-    // УБЕРИТЕ эту часть - она конфликтует с кнопкой старта
-    // if (this.gameState === 'menu') {
-    //     this.startGame();
-    // }
-}
+            
+            console.log('🖱️ Canvas click/touch, gameState:', this.gameState);
+            
+            if (this.gameState === 'playing') {
+                this.jump();
+                
+                if (this.isMobile) {
+                    this.createTapEffect(e);
+                }
+            } else if (this.gameState === 'menu') {
+                console.log('🎮 Starting game from canvas click');
+                this.startGame();
+            }
+        };
+        
+        this.canvas.addEventListener('click', handleJump);
+        this.canvas.addEventListener('touchstart', handleJump, { passive: false });
+    }
     
     createTapEffect(e) {
         let x, y;
@@ -290,37 +289,14 @@ const startBtn = document.getElementById('startBtn');
         document.body.appendChild(effect);
         
         setTimeout(() => {
-            document.body.removeChild(effect);
+            if (effect.parentNode) {
+                document.body.removeChild(effect);
+            }
         }, 500);
     }
     
-    setupSwipeControls() {
-        let startX, startY;
-        
-        this.canvas.addEventListener('touchstart', (e) => {
-            startX = e.touches[0].clientX;
-            startY = e.touches[0].clientY;
-        }, { passive: true });
-        
-        this.canvas.addEventListener('touchend', (e) => {
-            if (!startX || !startY) return;
-            
-            const endX = e.changedTouches[0].clientX;
-            const endY = e.changedTouches[0].clientY;
-            
-            const diffX = endX - startX;
-            const diffY = endY - startY;
-            
-            if (Math.abs(diffY) > Math.abs(diffX) && diffY < -30) {
-                this.jump();
-            }
-            
-            startX = startY = null;
-        }, { passive: true });
-    }
-    
     startGame() {
-        console.log('🎮 START GAME');
+        console.log('🎮 START GAME called');
         
         this.gameState = 'playing';
         
@@ -517,7 +493,7 @@ const startBtn = document.getElementById('startBtn');
         });
     }
     
-   checkCollision(player, object) {
+    checkCollision(player, object) {
         return player.x < object.x + object.width &&
                player.x + player.width > object.x &&
                player.y < object.y + object.height &&
@@ -533,24 +509,20 @@ const startBtn = document.getElementById('startBtn');
         
         const theme = this.colorThemes[this.currentTheme];
         
-        // ЯРКИЙ ФОН
         const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
         gradient.addColorStop(0, theme.bg);
         gradient.addColorStop(1, this.darkenColor(theme.bg, 20));
         this.ctx.fillStyle = gradient;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // СОЛНЦЕ
         this.ctx.fillStyle = '#FFEB3B';
         this.ctx.beginPath();
         this.ctx.arc(this.canvas.width - 80, 80, 40, 0, Math.PI * 2);
         this.ctx.fill();
         
-        // ЗЕМЛЯ
         this.ctx.fillStyle = '#81C784';
         this.ctx.fillRect(0, this.ground.y, this.canvas.width, this.ground.height);
         
-        // ТРАВА
         this.ctx.fillStyle = '#4CAF50';
         this.ctx.fillRect(0, this.ground.y - 10, this.canvas.width, 10);
         
@@ -571,7 +543,6 @@ const startBtn = document.getElementById('startBtn');
             this.ctx.restore();
         });
         
-        // ПРЕПЯТСТВИЯ
         this.obstacles.forEach(obstacle => {
             this.ctx.fillStyle = obstacle.color;
             
@@ -587,7 +558,6 @@ const startBtn = document.getElementById('startBtn');
             }
         });
         
-        // СЛЕД ИГРОКА
         this.ctx.strokeStyle = theme.primary;
         this.ctx.lineWidth = 3;
         this.ctx.globalAlpha = 0.6;
@@ -602,7 +572,6 @@ const startBtn = document.getElementById('startBtn');
         this.ctx.stroke();
         this.ctx.globalAlpha = 1;
         
-        // ИГРОК
         this.ctx.save();
         this.ctx.translate(
             this.player.x + this.player.width/2, 
@@ -621,7 +590,6 @@ const startBtn = document.getElementById('startBtn');
         this.ctx.fillStyle = playerGradient;
         this.ctx.fillRect(-this.player.width/2, -this.player.height/2, this.player.width, this.player.height);
         
-        // ГЛАЗА
         this.ctx.fillStyle = '#FFFFFF';
         this.ctx.fillRect(-this.player.width/4, -this.player.height/4, 8, 8);
         this.ctx.fillRect(this.player.width/4 - 8, -this.player.height/4, 8, 8);
@@ -632,7 +600,6 @@ const startBtn = document.getElementById('startBtn');
         
         this.ctx.restore();
         
-        // ЧАСТИЦЫ
         this.particles.forEach(p => {
             this.ctx.globalAlpha = p.life;
             this.ctx.fillStyle = p.color;
@@ -642,7 +609,6 @@ const startBtn = document.getElementById('startBtn');
         });
         this.ctx.globalAlpha = 1;
         
-        // ТЕКСТОВЫЕ ЭФФЕКТЫ
         this.effects.forEach(effect => {
             this.ctx.globalAlpha = effect.life;
             this.ctx.fillStyle = effect.color;
@@ -654,108 +620,115 @@ const startBtn = document.getElementById('startBtn');
         
         this.ctx.restore();
     }
-        darkenColor(color, percent) {
-            const num = parseInt(color.replace("#", ""), 16);
-            const amt = Math.round(2.55 * percent);
-            const R = (num >> 16) - amt;
-            const G = (num >> 8 & 0x00FF) - amt;
-            const B = (num & 0x0000FF) - amt;
-            return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+    
+    darkenColor(color, percent) {
+        const num = parseInt(color.replace("#", ""), 16);
+        const amt = Math.round(2.55 * percent);
+        const R = (num >> 16) - amt;
+        const G = (num >> 8 & 0x00FF) - amt;
+        const B = (num & 0x0000FF) - amt;
+        return "#" + (0x1000000 + 
+            (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
             (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
-            (B < 255 ? B < 1 ? 0 : B : 255)).tostring(16).slice(1);
-        }
-        updatescore() {
-            if (this.scoreElement) {
-                this.scoreElement.textContent = ` Очки: ${this.score}`;
-            }
-
-            if (this.score > this.highScore) {
-                this.highScore = this.score;
-                if (this.highScoreElement) {
-                    this.highScoreElement.textContent = ` Рекорд: ${this.highScore}`;
-                  
-                }
-                localStorage.setItem('geometryDashHighScore', this.highScore);
-            }
+            (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+    }
+    
+    updateScore() {
+        if (this.scoreElement) {
+            this.scoreElement.textContent = `Очки: ${this.score}`;
         }
 
-
-        gameover() {
-            this.gamestate = 'gameover';
-            
-            const gameOverScreen = document.getElementById('gameoverScreen');
-            const finalScore = document.getElementById('finalScore');
-            const menu = document.getElementById('menu');
-            const gameContainer = document.getElementById('gameContainer');
-            
-            
-            if (gameOverScreen) gameoverscreen.classList.remove('hidden');
-            if (finalScore) finalScore.textContent = ` Очки: ${this.score}`;
-            if (menu) menu.classList.remove('hidden');
-            if (gameContainer) {
-                gameContainer.classList.remove('playing');
+        if (this.score > this.highScore) {
+            this.highScore = this.score;
+            if (this.highScoreElement) {
+                this.highScoreElement.textContent = `🏆 Рекорд: ${this.highScore}`;
             }
-            
-            this.screenShake = 2;
-            this.createParticleEffect(this.player.x + this.player.width/2, this.player.y + this.player.height/2, 30, '#FF0000');
-                this.playSound('crash');
-                this.sendScoreToBot();
-        }
-        restartGame() {
-            const gameContainer = document.getElementById('gameContainer');
-            if (gameContainer) {
-                gameContainer.classList.add('playing');
-            }
-                    
-            const menu = document.getElementById('menu');
-            if (menu) {
-                menu.classList.add('hidden');
-            }
-                    
-            this.currentTheme = (this.currentTheme + 1) % this.colorThemes.length;
-            this.initGame();
-            this.startGame();
-        }
-        
-
-        sharescore() {
-                    const shareText = ` Я набрал ${this.score} очков в Geometry Dash Ultimate!`;
-                    if (navigator.share) {
-                        navigator. share({
-                        title: 'Geometry Dash Ultimate',
-                        text: shareText
-                        });
-                    } else {
-                        alert(shareText);
-                    }
-                }
-        sendScoreToBot () {
-                try {
-                    if (window.Telegram && Telegram.WebApp) {
-                        Telegram.WebApp.sendData(JSON.stringify({
-                        action: 'game_score',
-                        score: this.score,
-                        highScore: this.highScore
-                    }));
-                }
-            } catch (e) {
-                console.log('Cannot send data to bot:', e);
-           }
-        }
-
-        gameLoop() {
-            this.update();
-            this.draw();
-
-            if (this.gameState === 'playing') {
-                        requestAnimationFrame(() => this.gameLoop());
-            }
+            localStorage.setItem('geometryDashHighScore', this.highScore);
         }
     }
 
+    gameOver() {
+        console.log('💀 GAME OVER');
+        this.gameState = 'gameover';
+        
+        // ИСПРАВЛЕНО: 'gameoverScreen' -> 'gameOverScreen'
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const finalScore = document.getElementById('finalScore');
+        const menu = document.getElementById('menu');
+        const gameContainer = document.getElementById('gameContainer');
+        
+        if (gameOverScreen) gameOverScreen.classList.remove('hidden');
+        if (finalScore) finalScore.textContent = `Очки: ${this.score}`;
+        if (menu) menu.classList.remove('hidden');
+        if (gameContainer) {
+            gameContainer.classList.remove('playing');
+        }
+        
+        this.screenShake = 2;
+        this.createParticleEffect(this.player.x + this.player.width/2, 
+                                 this.player.y + this.player.height/2, 
+                                 30, '#FF0000');
+        this.playSound('crash');
+        this.sendScoreToBot();
+    }
+    
+    restartGame() {
+        console.log('🔄 RESTART GAME');
+        
+        const gameContainer = document.getElementById('gameContainer');
+        if (gameContainer) {
+            gameContainer.classList.add('playing');
+        }
+                
+        const menu = document.getElementById('menu');
+        if (menu) {
+            menu.classList.add('hidden');
+        }
+                
+        this.currentTheme = (this.currentTheme + 1) % this.colorThemes.length;
+        this.initGame();
+        this.startGame();
+    }
+    
+    shareScore() {
+        const shareText = `Я набрал ${this.score} очков в Geometry Dash Ultimate!`;
+        if (navigator.share) {
+            navigator.share({
+                title: 'Geometry Dash Ultimate',
+                text: shareText
+            });
+        } else {
+            alert(shareText);
+        }
+    }
+    
+    sendScoreToBot() {
+        try {
+            if (window.Telegram && Telegram.WebApp) {
+                Telegram.WebApp.sendData(JSON.stringify({
+                    action: 'game_score',
+                    score: this.score,
+                    highScore: this.highScore
+                }));
+            }
+        } catch (e) {
+            console.log('Cannot send data to bot:', e);
+        }
+    }
+
+    gameLoop() {
+        this.update();
+        this.draw();
+
+        if (this.gameState === 'playing') {
+            requestAnimationFrame(() => this.gameLoop());
+        }
+    }
+}
+
 // Инициализация
 function initializeGame() {
-              console.log('🚀 INITIALIZING GAME...');
+    console.log('🚀 INITIALIZING GAME...');
     
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
@@ -763,9 +736,7 @@ function initializeGame() {
         });
     } else {
         window.game = new GeometryDash();
-
-
-        }
+    }
 }
 
 // Запуск
