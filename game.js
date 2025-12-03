@@ -191,7 +191,8 @@ class GeometryDash {
     setupEventListeners() {
         console.log('🔧 Setting up event listeners...');
         
-        const startBtn = document.getElementById('startBtn');
+        // Строка 128 в game.js:
+const startBtn = document.getElementById('startBtn');
         if (startBtn) {
             startBtn.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -232,36 +233,36 @@ class GeometryDash {
     }
     
     setupCanvasControls() {
-
-        const handleJump = (e) => {
-
-            if (e.type === 'touchstart') {
-                e.preventDefault();
-            }
-            
-            if (this.gameState === 'playing') {
-                this.jump();
-                
-                if (this.isMobile) {
-                    this.createTapEffect(e);
-                }
-            }
-            
-            if (this.gameState === 'menu') {
-                this.startGame();
-            }
-        };
+    const handleJump = (e) => {
+        if (e.type === 'touchstart') {
+            e.preventDefault();
+        }
         
-        this.canvas.addEventListener('click', handleJump);
-        this.canvas.addEventListener('touchstart', handleJump, { passive: false });
-        
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' || e.key === ' ') {
-                e.preventDefault();
-                handleJump(e);
+        if (this.gameState === 'playing') {
+            this.jump();
+            
+            if (this.isMobile) {
+                this.createTapEffect(e);
             }
-        });
-    }
+        }
+    };
+    
+    // ТОЛЬКО для прыжка
+    this.canvas.addEventListener('click', handleJump);
+    this.canvas.addEventListener('touchstart', handleJump, { passive: false });
+    
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' || e.key === ' ') {
+            e.preventDefault();
+            handleJump(e);
+        }
+    });
+    
+    // УБЕРИТЕ эту часть - она конфликтует с кнопкой старта
+    // if (this.gameState === 'menu') {
+    //     this.startGame();
+    // }
+}
     
     createTapEffect(e) {
         let x, y;
